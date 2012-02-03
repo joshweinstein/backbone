@@ -11,8 +11,12 @@ $(document).ready(function() {
   module("Backbone.Model", {
 
     setup: function() {
-      Backbone.sync = function() {
-        lastRequest = _.toArray(arguments);
+      Backbone.sync = function(method, model, options) {
+        lastRequest = {
+          method: method,
+          model: model,
+          options: options
+        };
         sync.apply(this, arguments);
       };
       $.ajax = function(params) { ajaxParams = params; };
@@ -323,7 +327,7 @@ $(document).ready(function() {
     var model = new Backbone.Model({firstName : "Taylor", lastName: "Swift"});
     model.on('change', function () {
       model.save();
-      ok(_.isEqual(lastRequest[1], model));
+      ok(_.isEqual(lastRequest.model, model));
     });
     model.set({lastName: 'Hicks'});
   });
@@ -343,10 +347,22 @@ $(document).ready(function() {
     equal(lastError, "Can't change admin status.");
   });
 
+  test("Model: isValid", function() {
+    var model = new Backbone.Model({valid: true});
+    model.validate = function(attrs) {
+      if (!attrs.valid) return "invalid";
+    };
+    equal(model.isValid(), true);
+    equal(model.set({valid: false}), false);
+    equal(model.isValid(), true);
+    ok(model.set('valid', false, {silent: true}));
+    equal(model.isValid(), false);
+  });
+
   test("Model: save", function() {
     doc.save({title : "Henry V"});
-    equal(lastRequest[0], 'update');
-    ok(_.isEqual(lastRequest[1], doc));
+    equal(lastRequest.method, 'update');
+    ok(_.isEqual(lastRequest.model, doc));
   });
 
   test("Model: save in positional style", function() {
@@ -360,14 +376,14 @@ $(document).ready(function() {
 
   test("Model: fetch", function() {
     doc.fetch();
-    equal(lastRequest[0], 'read');
-    ok(_.isEqual(lastRequest[1], doc));
+    equal(lastRequest.method, 'read');
+    ok(_.isEqual(lastRequest.model, doc));
   });
 
   test("Model: destroy", function() {
     doc.destroy();
-    equal(lastRequest[0], 'delete');
-    ok(_.isEqual(lastRequest[1], doc));
+    equal(lastRequest.method, 'delete');
+    ok(_.isEqual(lastRequest.model, doc));
   });
 
   test("Model: non-persisted destroy", function() {
@@ -392,9 +408,9 @@ $(document).ready(function() {
     equal(model.get('a'), 100);
     equal(lastError, undefined);
     result = model.set({admin: true}, {silent: true});
+    equal(model.get('admin'), true);
+    result = model.set({a: 200, admin: false});
     equal(lastError, "Can't change admin status.");
-    equal(model.get('admin'), void 0);
-    result = model.set({a: 200, admin: true});
     equal(result, false);
     equal(model.get('a'), 100);
   });
@@ -595,7 +611,7 @@ $(document).ready(function() {
   test("save with `wait` succeeds without `validate`", function() {
     var model = new Backbone.Model();
     model.save({x: 1}, {wait: true});
-    ok(lastRequest[1] === model);
+    ok(lastRequest.model === model);
   });
 
   test("`hasChanged` for falsey keys", function() {
@@ -620,7 +636,7 @@ $(document).ready(function() {
     deepEqual(JSON.parse(ajaxParams.data), {x: 3, y: 2});
     equal(model.get('x'), 1);
     equal(changed, 0);
-    lastRequest[2].success({});
+    lastRequest.options.success({});
     equal(model.get('x'), 3);
     equal(changed, 1);
   });
@@ -672,6 +688,24 @@ $(document).ready(function() {
       }
     });
     model.set({x: true});
+  });
+
+  test("Backbone.wrapError triggers `'error'`", 12, function() {
+    var resp = {};
+    var options = {};
+    var model = new Backbone.Model();
+    model.on('error', error);
+    var callback = Backbone.wrapError(null, model, options);
+    callback(model, resp);
+    callback(resp);
+    callback = Backbone.wrapError(error, model, options);
+    callback(model, resp);
+    callback(resp);
+    function error(_model, _resp, _options) {
+      ok(model === _model);
+      ok(resp === _resp);
+      ok(options === _options);
+    }
   });
 
 });
