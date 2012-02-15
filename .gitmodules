@@ -1,0 +1,3 @@
+[submodule "plugins/backbone.associations"]
+	path = plugins/backbone.associations
+	url = https://joshweinstein@github.com/argmaps/Backbone.Associations.git
