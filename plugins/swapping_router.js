@@ -7,7 +7,12 @@ _.extend(Backbone.SwappingRouter.prototype, Backbone.Router.prototype, {
     if (this.currentView && this.currentView.leave) this.currentView.leave();
 
     this.currentView = newView;
-    this.$el.empty().append(this.currentView.render().el);
+
+    if (this.currentView.isNotInDOM()) {
+        this.$el.empty().append(this.currentView.render().el);
+    } else {
+        this.currentView.render();
+    }
     this.currentView.trigger('afterInsertedIntoDOM');
   }
 });
