@@ -282,7 +282,7 @@
   <div id="sidebar" class="interface">
 
     <a class="toc_title" href="#">
-      Backbone.js <span class="version">(0.9.9)</span>
+      Backbone.js <span class="version">(0.9.10)</span>
     </a>
     <ul class="toc_section">
       <li>&raquo; <a href="http://github.com/documentcloud/backbone">GitHub Repository</a></li>
@@ -547,11 +547,11 @@
 
     <table>
       <tr>
-        <td><a class="punch" href="backbone.js">Development Version (0.9.9)</a></td>
+        <td><a class="punch" href="backbone.js">Development Version (0.9.10)</a></td>
         <td class="text"><i>56kb, Full source, lots of comments</i></td>
       </tr>
       <tr>
-        <td><a class="punch" href="backbone-min.js">Production Version (0.9.9)</a></td>
+        <td><a class="punch" href="backbone-min.js">Production Version (0.9.10)</a></td>
         <td class="text"><i>6.3kb, Packed and gzipped</i></td>
       </tr>
       <tr>
@@ -611,17 +611,10 @@
       to execute them.
     </p>
 
-    <h2 id="upgrading">Upgrading to Edge</h2>
+    <h2 id="upgrading">Upgrading to 0.9.10</h2>
 
     <p>
-      You're reading the docs for an unreleased version. See the 
-      <a href="#changelog">change log</a>.
-    </p>
-
-    <h2>Upgrading to 0.9.9</h2>
-
-    <p>
-      Backbone <b>0.9.9</b> should be considered as a release candidate
+      Backbone <b>0.9.10</b> should be considered as a release candidate
       for an upcoming <b>1.0</b>. If you're upgrading from a previous version,
       be sure to check the
       <a href="#changelog">change log</a>. In brief, a few of the larger changes
@@ -654,6 +647,20 @@
       </li>
       <li>
         Backbone events now support <a href="#Events-once"</a>once</a>.
+      </li>
+      <li>
+        Model validation is now only enforced by default in
+        <tt>Model#save</tt> and no longer enforced by default upon
+        construction or in <tt>Model#set</tt>, unless the <tt>{validate:true}</tt>
+        option is passed.
+      </li>
+      <li>
+        Passing <tt>{silent:true}</tt> on change will no longer delay individual
+        <tt>"change:attr"</tt> events, instead they are silenced entirely.
+      </li>
+      <li>
+        The <tt>Model#change</tt> method has been removed, as delayed attribute
+        changes as no longer available.
       </li>
     </ul>
 
@@ -976,16 +983,6 @@ note.set({title: "March 20", content: "In his eyes she eclipses..."});
 book.set("title", "A Scandal in Bohemia");
 </pre>
 
-    <p>
-      If the model has a <a href="#Model-validate">validate</a> method,
-      it will be validated before the attributes are set, no changes will
-      occur if the validation fails, and <b>set</b> will return <tt>false</tt>.
-      Otherwise, <b>set</b> returns a reference to the model.
-      You may also pass an <tt>error</tt>
-      callback in the options, which will be invoked alongside the
-      <tt>"error"</tt> event, should validation fail.
-    </p>
-
     <p id="Model-escape">
       <b class="header">escape</b><code>model.escape(attribute)</code>
       <br />
@@ -1080,7 +1077,7 @@ alert("Cake id: " + cake.id);
     <p>
       Please use <a href="#Model-set">set</a> to update the <b>attributes</b>
       instead of modifying them directly. If you'd like to retrieve and munge a
-      copy of the model's attributes, use <a href="#Model-toJSON">toJSON</a>
+      copy of the model's attributes, use <tt>_.clone(model.attributes)</tt>
       instead.
     </p>
 
@@ -1129,11 +1126,13 @@ alert("Dessert will be " + (new Meal).get('dessert'));
     <p id="Model-toJSON">
       <b class="header">toJSON</b><code>model.toJSON()</code>
       <br />
-      Return a copy of the model's <a href="#Model-attributes">attributes</a> for JSON stringification.
-      This can be used for persistence, serialization, or for augmentation before
-      being handed off to a view. The name of this method is a bit confusing, as
-      it doesn't actually return a JSON string &mdash; but I'm afraid that it's
-      the way that the <a href="https://developer.mozilla.org/en/JSON#toJSON()_method">JavaScript API for <b>JSON.stringify</b> works</a>.
+      Return a copy of the model's <a href="#Model-attributes">attributes</a>
+      for JSON stringification.  This can be used for persistence,
+      serialization, or for augmentation before being sent to the server. The
+      name of this method is a bit confusing, as it doesn't actually return a
+      JSON string &mdash; but I'm afraid that it's the way that the
+      <a href="https://developer.mozilla.org/en/JSON#toJSON()_method">JavaScript API for <b>JSON.stringify</b></a>
+      works.
     </p>
 
 <pre class="runnable">
@@ -1276,7 +1275,7 @@ book.destroy({success: function(model, response) {
       your custom validation logic, if you have any that can be performed
       in JavaScript. By default <b>validate</b> is called before
       <tt>save</tt>, but can also be called before <tt>set</tt> if
-      <tt>{validate:true}</tt> is passed. The <b>validate</b> method is passed 
+      <tt>{validate:true}</tt> is passed. The <b>validate</b> method is passed
       the model attributes, as well as the options from <tt>set</tt> or <tt>save</tt>.
       If the attributes are valid, don't return anything from <b>validate</b>;
       if they are invalid, return an error of your choosing. It
@@ -2507,7 +2506,7 @@ ui.Chapter = Backbone.View.extend({
 var Bookmark = Backbone.View.extend({
   template: _.template(…),
   render: function() {
-    this.$el.html(this.template(this.model.toJSON()));
+    this.$el.html(this.template(this.model.attributes));
     return this;
   }
 });
@@ -2593,7 +2592,7 @@ var DocumentView = Backbone.View.extend({
   },
 
   render: function() {
-    this.$el.html(this.template(this.model.toJSON()));
+    this.$el.html(this.template(this.model.attributes));
     return this;
   },
 
@@ -3812,16 +3811,16 @@ ActiveRecord::Base.include_root_in_json = false
 
     <h2 id="changelog">Change Log</h2>
 
-    <b class="header">Edge</b> &mdash; <small><i>Not yet released</i></small> &mdash; <a href="https://github.com/documentcloud/backbone/compare/0.9.9...master">Diff</a><br />
+    <b class="header">0.9.10</b> &mdash; <small><i>Jan. 15, 2013</i></small> &mdash; <a href="https://github.com/documentcloud/backbone/compare/0.9.9...0.9.10">Diff</a><br />
     <ul style="margin-top: 5px;">
       <li>
-        A <tt>"route"</tt> event is triggered on the router in addition 
+        A <tt>"route"</tt> event is triggered on the router in addition
         to being fired on <tt>Backbone.history</tt>.
       </li>
       <li>
-        Model validation is now only enforced by default in 
+        Model validation is now only enforced by default in
         <tt>Model#save</tt> and no longer enforced by default upon
-        construction or in <tt>Model#set</tt>, unless the <tt>{validate:true}</tt> 
+        construction or in <tt>Model#set</tt>, unless the <tt>{validate:true}</tt>
         option is passed.
       </li>
       <li>
@@ -3829,19 +3828,19 @@ ActiveRecord::Base.include_root_in_json = false
         construct DOM elements now.
       </li>
       <li>
-        Passing <tt>{silent:true}</tt> on change will no longer delay individual 
+        Passing <tt>{silent:true}</tt> on change will no longer delay individual
         <tt>"change:attr"</tt> events, instead they are silenced entirely.
       </li>
-      <li>  
-        The <tt>Model#change</tt> method has been removed, as delayed attribute 
+      <li>
+        The <tt>Model#change</tt> method has been removed, as delayed attribute
         changes as no longer available.
       </li>
       <li>
-        Bug fix on <tt>change</tt> where attribute comparison uses <tt>!==</tt> 
+        Bug fix on <tt>change</tt> where attribute comparison uses <tt>!==</tt>
         instead of <tt>_.isEqual</tt>.
       </li>
       <li>
-        Bug fix where an empty response from the server on save would not call 
+        Bug fix where an empty response from the server on save would not call
         the success function.
       </li>
     </ul>
